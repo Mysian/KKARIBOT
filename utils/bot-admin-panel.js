@@ -24,7 +24,11 @@ function buildEmbed(state) {
   const e = new EmbedBuilder()
     .setTitle('봇 관리 패널')
     .setDescription('서버 관리 전용 패널입니다.')
-    .setColor(state?.lastStatus === 'success' ? 0x22c55e : state?.lastStatus === 'error' ? 0xef4444 : 0x3b82f6)
+    .setColor(
+  state?.lastStatus === 'success' ? 0x22c55e :
+  state?.lastStatus === 'error' ? 0xef4444 :
+  0x3b82f6 // queued/기본
+)
     .addFields(
       { name: '대상 서버', value: TARGET_GUILD_ID, inline: true },
       { name: '대상 채널', value: TARGET_CHANNEL_ID, inline: true },
@@ -87,46 +91,70 @@ export default function registerBotAdminPanel(client) {
       return;
     }
 
-    try {
-      await interaction.deferReply({ ephemeral: true });
-      let action = '';
-      let command = '';
+      try {
+    const id = interaction.customId;
 
-      if (id === 'botctl:gitpull') {
-        action = '봇 업데이트 (git pull origin main)';
-        command = 'git pull origin main';
-      } else if (id === 'botctl:deploy') {
-        action = '봇 명령어 업데이트 (node deploy-commands.js)';
-        command = 'node deploy-commands.js';
-      } else if (id === 'botctl:restart') {
-        action = '봇 재시작 (pm2 restart index.js)';
-        command = 'pm2 restart kkaribot';
-      } else if (id === 'botctl:refresh') {
-        await updatePanelMessage(client, { updatedAt: new Date().toISOString() });
-        await interaction.editReply({ content: '패널을 새로고침했습니다.' });
-        return;
-      } else {
-        await interaction.editReply({ content: '알 수 없는 작업입니다.' });
-        return;
-      }
+    // 재시작은 "생각중" 없이 즉시 응답하고, 백그라운드로 실행
+    if (id === 'botctl:restart') {
+      const action = '봇 재시작 (pm2 restart kkaribot)';
+      await interaction.reply({
+        content: '재시작 명령을 전송했습니다. 잠시 후 처리됩니다.',
+        ephemeral: true
+      }).catch(() => {});
 
-      await updatePanelMessage(client, { lastAction: action, lastStatus: '진행 중', updatedAt: new Date().toISOString() });
-
-      const { stdout, stderr } = await runTask(command).catch(async err => {
-        await updatePanelMessage(client, { lastStatus: 'error', updatedAt: new Date().toISOString() });
-        const msg = (err?.stderr || err?.stdout || String(err) || '').slice(0, 1800);
-        await interaction.editReply({ content: `실패\n${'```'}\n${msg}\n${'```'}` });
-        throw err;
+      // 패널 상태는 대기(queued)처럼 표시 (원하면 문구 변경 가능)
+      await updatePanelMessage(client, {
+        lastAction: action,
+        lastStatus: 'queued',
+        updatedAt: new Date().toISOString()
       });
 
-      await updatePanelMessage(client, { lastStatus: 'success', updatedAt: new Date().toISOString() });
+      // 답장 후 약간의 텀을 두고 재시작 커맨드 실행
+      setTimeout(() => {
+        runTask('pm2 restart kkaribot').catch(() => {});
+      }, 500);
 
-      const out = (stdout || '').trim();
-      const err = (stderr || '').trim();
-      const body =
-        (out ? `STDOUT:\n${out}\n` : '') +
-        (err ? `\nSTDERR:\n${err}\n` : '');
-      await interaction.editReply({ content: `완료: ${action}\n${'```'}\n${body.slice(0, 1800) || '(출력 없음)'}\n${'```'}` });
-    } catch {}
+      return; // 여기서 끝
+    }
+
+    // 나머지 작업은 기존처럼 진행(생각중 처리)
+    await interaction.deferReply({ ephemeral: true });
+    let action = '';
+    let command = '';
+
+    if (id === 'botctl:gitpull') {
+      action = '봇 업데이트 (git pull origin main)';
+      command = 'git pull origin main';
+    } else if (id === 'botctl:deploy') {
+      action = '봇 명령어 업데이트 (node deploy-commands.js)';
+      command = 'node deploy-commands.js';
+    } else if (id === 'botctl:refresh') {
+      await updatePanelMessage(client, { updatedAt: new Date().toISOString() });
+      await interaction.editReply({ content: '패널을 새로고침했습니다.' });
+      return;
+    } else {
+      await interaction.editReply({ content: '알 수 없는 작업입니다.' });
+      return;
+    }
+
+    await updatePanelMessage(client, { lastAction: action, lastStatus: '진행 중', updatedAt: new Date().toISOString() });
+
+    const { stdout, stderr } = await runTask(command).catch(async err => {
+      await updatePanelMessage(client, { lastStatus: 'error', updatedAt: new Date().toISOString() });
+      const msg = (err?.stderr || err?.stdout || String(err) || '').slice(0, 1800);
+      await interaction.editReply({ content: `실패\n${'```'}\n${msg}\n${'```'}` });
+      throw err;
+    });
+
+    await updatePanelMessage(client, { lastStatus: 'success', updatedAt: new Date().toISOString() });
+
+    const out = (stdout || '').trim();
+    const err = (stderr || '').trim();
+    const body =
+      (out ? `STDOUT:\n${out}\n` : '') +
+      (err ? `\nSTDERR:\n${err}\n` : '');
+    await interaction.editReply({ content: `완료: ${action}\n${'```'}\n${body.slice(0, 1800) || '(출력 없음)'}\n${'```'}` });
+  } catch {}
+
   });
 }
