@@ -102,35 +102,38 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     if (interaction.isChatInputCommand()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const cmd = client.commands.get(interaction.commandName);
-      if (!cmd?.execute) return;
-      await cmd.execute(interaction);
-      await logToGuild(client, interaction.guildId, `[명령어] ${interaction.user.tag} → /${interaction.commandName}`);
-      await logToOwner(client, `[${interaction.guild?.name || 'DM'}] ${interaction.user.tag} → /${interaction.commandName}`);
-      return;
-    }
+  if (!interaction.inGuild()) return;
+  ensureGuild(interaction.guildId).catch(() => {});
+  const cmd = client.commands.get(interaction.commandName);
+  if (!cmd?.execute) return;
+  await cmd.execute(interaction);
+  await logToGuild(client, interaction.guildId, `[명령어] ${interaction.user.tag} → /${interaction.commandName}`);
+  await logToOwner(client, `[${interaction.guild?.name || 'DM'}] ${interaction.user.tag} → /${interaction.commandName}`);
+  return;
+}
+
 
     if (interaction.isUserContextMenuCommand()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const cmd = client.commands.get(interaction.commandName);
-      if (cmd?.contextUser) await cmd.contextUser(interaction);
-      return;
-    }
-
-    if (interaction.isMessageContextMenuCommand()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const cmd = client.commands.get(interaction.commandName);
-      if (cmd?.contextMessage) await cmd.contextMessage(interaction);
-      return;
-    }
-
-    if (interaction.isButton()) {
   if (!interaction.inGuild()) return;
-  await ensureGuild(interaction.guildId);
+  ensureGuild(interaction.guildId).catch(() => {});
+  const cmd = client.commands.get(interaction.commandName);
+  if (cmd?.contextUser) await cmd.contextUser(interaction);
+  return;
+}
+
+
+if (interaction.isMessageContextMenuCommand()) {
+  if (!interaction.inGuild()) return;
+  ensureGuild(interaction.guildId).catch(() => {});
+  const cmd = client.commands.get(interaction.commandName);
+  if (cmd?.contextMessage) await cmd.contextMessage(interaction);
+  return;
+}
+
+
+if (interaction.isButton()) {
+  if (!interaction.inGuild()) return;
+  ensureGuild(interaction.guildId).catch(() => {});
   const id = interaction.customId || '';
   for (const [prefix, handler] of buttonRouter) {
     if (id.startsWith(prefix)) {
@@ -141,9 +144,10 @@ client.on(Events.InteractionCreate, async interaction => {
   return;
 }
 
-    if (interaction.isStringSelectMenu()) {
+
+if (interaction.isStringSelectMenu()) {
   if (!interaction.inGuild()) return;
-  await ensureGuild(interaction.guildId);
+  ensureGuild(interaction.guildId).catch(() => {});
   const id = interaction.customId || '';
   for (const [prefix, handler] of selectRouter) {
     if (id.startsWith(prefix)) {
@@ -155,9 +159,9 @@ client.on(Events.InteractionCreate, async interaction => {
 }
 
 
-    if (interaction.isModalSubmit()) {
+if (interaction.isModalSubmit()) {
   if (!interaction.inGuild()) return;
-  await ensureGuild(interaction.guildId);
+  ensureGuild(interaction.guildId).catch(() => {});
   const id = interaction.customId || '';
   for (const [prefix, handler] of modalRouter) {
     if (id.startsWith(prefix)) {
