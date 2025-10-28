@@ -96,7 +96,7 @@ export default function registerBotAdminPanel(client) {
 
     // 재시작은 "생각중" 없이 즉시 응답하고, 백그라운드로 실행
     if (id === 'botctl:restart') {
-      const action = '봇 재시작 (pm2 restart kkaribot)';
+      const action = '봇 재시작 (pm2 restart index.js)';
       await interaction.reply({
         content: '재시작 명령을 전송했습니다. 잠시 후 처리됩니다.',
         ephemeral: true
@@ -111,7 +111,7 @@ export default function registerBotAdminPanel(client) {
 
       // 답장 후 약간의 텀을 두고 재시작 커맨드 실행
       setTimeout(() => {
-        runTask('pm2 restart kkaribot').catch(() => {});
+        runTask('pm2 restart index.js').catch(() => {});
       }, 500);
 
       return; // 여기서 끝
