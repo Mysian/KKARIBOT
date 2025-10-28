@@ -99,7 +99,7 @@ export default function registerBotAdminPanel(client) {
         action = '봇 명령어 업데이트 (node deploy-commands.js)';
         command = 'node deploy-commands.js';
       } else if (id === 'botctl:restart') {
-        action = '봇 재시작 (pm2 restart kkaribot)';
+        action = '봇 재시작 (pm2 restart index.js)';
         command = 'pm2 restart kkaribot';
       } else if (id === 'botctl:refresh') {
         await updatePanelMessage(client, { updatedAt: new Date().toISOString() });
