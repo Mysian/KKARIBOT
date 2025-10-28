@@ -101,9 +101,12 @@ client.on(Events.InteractionCreate, async interaction => {
       return;
     }
 
-    if (interaction.isChatInputCommand()) {
+if (interaction.isChatInputCommand()) {
   if (!interaction.inGuild()) return;
   ensureGuild(interaction.guildId).catch(() => {});
+  if (interaction.commandName === 'ping' && !(interaction.deferred || interaction.replied)) {
+    await interaction.deferReply({ ephemeral: true }).catch(() => {});
+  }
   const cmd = client.commands.get(interaction.commandName);
   if (!cmd?.execute) return;
   await cmd.execute(interaction);
@@ -111,6 +114,7 @@ client.on(Events.InteractionCreate, async interaction => {
   await logToOwner(client, `[${interaction.guild?.name || 'DM'}] ${interaction.user.tag} → /${interaction.commandName}`);
   return;
 }
+
 
 
     if (interaction.isUserContextMenuCommand()) {
