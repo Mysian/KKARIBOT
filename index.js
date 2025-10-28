@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { ensureGuild } from './utils/storage.js';
 import { logToGuild, logToOwner } from './utils/logger.js';
+import registerBotAdminPanel from './utils/bot-admin-panel.js';
 
 const client = new Client({
   intents: [
@@ -17,6 +18,8 @@ const client = new Client({
   ],
   partials: [Partials.Channel, Partials.Message, Partials.Reaction, Partials.GuildMember]
 });
+
+registerBotAdminPanel(client);
 
 client.commands = new Collection();
 const buttonRouter = [];
