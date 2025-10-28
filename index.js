@@ -129,46 +129,44 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     if (interaction.isButton()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const id = interaction.customId || '';
-      for (const [prefix, handler] of buttonRouter) {
-        if (id.startsWith(prefix)) {
-          await handler(interaction);
-          return;
-        }
-      }
-      await safeReply(interaction, { content: '지원되지 않는 버튼입니다.' });
+  if (!interaction.inGuild()) return;
+  await ensureGuild(interaction.guildId);
+  const id = interaction.customId || '';
+  for (const [prefix, handler] of buttonRouter) {
+    if (id.startsWith(prefix)) {
+      await handler(interaction);
       return;
     }
+  }
+  return;
+}
 
     if (interaction.isStringSelectMenu()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const id = interaction.customId || '';
-      for (const [prefix, handler] of selectRouter) {
-        if (id.startsWith(prefix)) {
-          await handler(interaction);
-          return;
-        }
-      }
-      await safeReply(interaction, { content: '지원되지 않는 선택 메뉴입니다.' });
+  if (!interaction.inGuild()) return;
+  await ensureGuild(interaction.guildId);
+  const id = interaction.customId || '';
+  for (const [prefix, handler] of selectRouter) {
+    if (id.startsWith(prefix)) {
+      await handler(interaction);
       return;
     }
+  }
+  return; 
+}
+
 
     if (interaction.isModalSubmit()) {
-      if (!interaction.inGuild()) return;
-      await ensureGuild(interaction.guildId);
-      const id = interaction.customId || '';
-      for (const [prefix, handler] of modalRouter) {
-        if (id.startsWith(prefix)) {
-          await handler(interaction);
-          return;
-        }
-      }
-      await safeReply(interaction, { content: '지원되지 않는 모달입니다.' });
+  if (!interaction.inGuild()) return;
+  await ensureGuild(interaction.guildId);
+  const id = interaction.customId || '';
+  for (const [prefix, handler] of modalRouter) {
+    if (id.startsWith(prefix)) {
+      await handler(interaction);
       return;
     }
+  }
+  return; // 미매칭이면 응답하지 않음
+}
   } catch (e) {
     await safeReply(interaction, { content: '오류가 발생했어요.' });
     try { await logToOwner(client, `오류: ${interaction?.commandName || interaction?.customId || 'N/A'} ${String(e)}`); } catch {}
